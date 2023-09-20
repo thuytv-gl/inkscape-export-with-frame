@@ -87,6 +87,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         points = list(map(lambda n: float(n), d.splitlines()))
         logger.debug(points)
 
+        os.remove(infile)
         return points
 
 
@@ -109,6 +110,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         new_rect.style ={'fill' : 'none', 'stroke' : '#ff33ee', 'stroke-width' : '0.1'}
 
         g = inkex.Group(new_rect, *map(clone_node, list(self.svg.selection.values())))
+        g.set('transform', 'translate(-40, 0)');
         layer.add(g)
 
     def _set_fill(self, node):
