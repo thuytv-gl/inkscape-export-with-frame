@@ -107,11 +107,14 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             width=f'{w}',
             height=f'{h}')
         new_rect.style ={'fill' : 'none', 'stroke' : '#ff33ee', 'stroke-width' : '0.1'}
-        layer.add(new_rect)
+
+        g = inkex.Group(new_rect, *map(clone_node, list(self.svg.selection.values())))
+        layer.add(g)
 
     def _set_fill(self, node):
-        for child in node.descendants():
-            child.style["fill"] = "#ff00ff"
+        pass # implement later
+        # for child in node.descendants():
+        #     child.style["fill"] = "#ff00ff"
 
 if __name__ == '__main__':
     TaoChuKyExtension().run()
