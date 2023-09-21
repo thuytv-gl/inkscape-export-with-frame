@@ -33,7 +33,7 @@ logger.basicConfig(filename='./ext.log',
 filemode='w', format='%(levelname)s: %(message)s', level=logger.DEBUG)
 
 FRAME_NODE_ID = '1:2frame'
-MAX_WIDTH = 400
+MAX_WIDTH = 300
 def randomword(length):
    letters = string.ascii_lowercase
    return ''.join(random.choice(letters) for i in range(length))
