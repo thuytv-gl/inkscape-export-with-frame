@@ -147,7 +147,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         opt = self.options
         export_type = opt.export_type
         filename = os.path.join(self.svg_path(), opt.filename)
-        colors = [('den', '000000'), ('trang', 'ffffff'), ('gold', 'ffd42aff')]
+        colors = [('den', '000000'), ('trang', 'ffffff'), ('gold', 'ffd42a')]
         self.do_export(g, colors, opt.dpi, filename)
     
     def gen_demo_export_action(self, filename):
