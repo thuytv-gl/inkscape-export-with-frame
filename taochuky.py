@@ -189,7 +189,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         actions = actions + exports
         res = inkex.command.inkscape(tmpfile, actions=";".join(actions))
         logger.debug(res)
-        # os.remove(tmpfile)
+        os.remove(tmpfile)
         logger.debug(f"[Time][Export]: {time.time() - start }")
 
     def set_fill(self, node, color):
