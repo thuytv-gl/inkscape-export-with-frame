@@ -2,12 +2,16 @@
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
   <name>Tao Chu Ky</name>
   <id>org.inkscape.export.taochuky</id>
-  <param name="dpi" type="number" gui-text="700"/>
-  <param name="filename" type="string" gui-text="Tên File" />
-  <param name="export-type" type="optiongroup" appearance="radio" gui-text="Loại File">
-    <option value="demo">File mẫu</option>
-    <option value="done">File lấy tiền</option>
-  </param>
+  <param name="demo-dpi" type="int" min="50" max="500" appearance="full" gui-text="DPI mẫu"/>
+  <param name="dpi" type="int" min="500" max="2000" appearance="full" gui-text="DPI lấy tiền"/>
+  <separator />
+  <hbox>
+      <param name="filename" type="string" gui-text="Tên" />
+      <param name="export-type" type="optiongroup" appearance="radio" gui-text="">
+          <option value="demo">File mẫu</option>
+          <option value="done">File lấy tiền</option>
+      </param>
+  </hbox>
   <effect>
     <effects-menu>
       <submenu name="Export"/>
