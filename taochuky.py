@@ -69,31 +69,27 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
 
         svg = inkex.base.SvgOutputMixin.get_template(width=0, height=0).getroot()
         g = inkex.Group(*map(clone_node, list(self.svg.selection.values())))
-        groupId = randomword(10)
         g.set('id', DEFAULT_GROUP_ID)
         svg.append(g)
-        infile = os.path.join(f'{randomword(6)}.svg')
+        infile = os.path.join(f'in-{randomword(6)}.svg')
         inkex.command.write_svg(svg, infile)
 
         start = time.time()
         actions = [
-            'active-window-start',
-            'select-all:all'
-            'selection-ungroup',
-            'select-by-element:text'
+            'select-all:all',
             'object-to-path',
             'export-overwrite',
             'export-do'
         ]
         d = inkex.command.inkscape(
-                infile, 
-                actions=";".join(actions),
-                select=groupId,
-                X=True,
-                Y=True,
-                W=True,
-                H=True,
-            )
+            infile, 
+            actions=";".join(actions),
+            select=DEFAULT_GROUP_ID,
+            X=True,
+            Y=True,
+            W=True,
+            H=True,
+        )
 
         points = list(map(lambda n: float(n), d.splitlines()))
         logger.debug(f"[Time][MesureSize]: {time.time() - start }")
@@ -108,6 +104,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         if padding != 0:
             px = padding * dx
         node.set('transform', f'matrix({dx + px},0.00,0.00,{dx + px},{px},{px})')
+
     def _export(self):
         os.environ["SELF_CALL"] = "true"
         c, g = self.select_area()
@@ -142,17 +139,16 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             self.export_final(g)
     
     def export_demo(self, g):
-
         os.environ["SELF_CALL"] = "true"
         opt = self.options
-        filename = os.path.join(self.svg_path(), f"demo/{opt.filename}")
+        filename = os.path.join(self.svg_path(), opt.filename)
         colors = [('den-demo', False)]
         self.do_export(g, colors, opt.demo_dpi, filename, True)
 
     def export_final(self, g):
         os.environ["SELF_CALL"] = "true"
         opt = self.options
-        filename = os.path.join(self.svg_path(), f"done/{opt.filename}")
+        filename = os.path.join(self.svg_path(), opt.filename)
         colors = [('mauden', '000000'), ('mautrang', 'f2f2f2'), ('maugold', 'ffd42a')]
         self.do_export(g, colors, opt.dpi, filename)
     
@@ -177,18 +173,15 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             svg.append(gc)
             ids.append(cid)
 
-        tmpfile = os.path.join(f'{randomword(4)}.svg')
+        tmpfile = os.path.join(f'out-{randomword(4)}.svg')
         inkex.command.write_svg(svg, tmpfile)
         exports = []
         if demo:
             exports = list(map(lambda id: self.gen_demo_export_action(id, filename), ids))
         else:
             exports = list(map(lambda id: self.gen_export_action(id, filename), ids))
-        actions = [ "active-window-start", f"export-dpi:{dpi}" ]
-        
-        actions = actions + exports
+        actions = [f"export-dpi:{dpi}"] + exports
         res = inkex.command.inkscape(tmpfile, actions=";".join(actions))
-        logger.debug(res)
         os.remove(tmpfile)
         logger.debug(f"[Time][Export]: {time.time() - start }")
 
