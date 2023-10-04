@@ -46,6 +46,8 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         pars.add_argument("--filename", type=str, help="File name")
 
     def effect(self):
+        if len(self.svg.selection.values()) == 0:
+            return
         start = time.time()
         self._export()
         logger.debug(f"[Time] total: {time.time() - start }")
@@ -116,9 +118,11 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             h = w / 2
         else:
             w = h * 2
+        x = x + w0/2 - w/2
+        y = y + h0/2 - h/2
         new_rect = inkex.Rectangle(
-            x=f'{x + w0/2 - w/2}',
-            y=f'{y + h0/2 - h/2}',
+            x=f'{x}',
+            y=f'{y}',
             width=f'{w}',
             height=f'{h}')
         new_rect.style ={'fill' : 'none', 'stroke' : 'none'}
