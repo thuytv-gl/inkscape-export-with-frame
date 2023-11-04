@@ -4,7 +4,13 @@
   <id>org.inkscape.export.taochuky</id>
   <param name="dpi" type="int" min="500" max="2000" appearance="full" gui-text="DPI lấy tiền"/>
   <separator />
-  <param name="filename" type="string" gui-text="Tên" />
+  <hbox>
+      <param name="filename" type="string" gui-text="Tên" />
+      <param name="export-type" type="optiongroup" appearance="radio/combo" gui-text="Kiểu export">
+          <option value="1">Đổi màu</option>
+          <option value="2">Không đổi màu</option>
+      </param>
+  </hbox>
   <effect>
     <effects-menu>
       <submenu name="Export"/>
