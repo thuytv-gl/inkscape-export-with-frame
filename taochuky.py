@@ -44,6 +44,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
     def add_arguments(self, pars):
         pars.add_argument("--dpi", type=int, default=700, help="DPI")
         pars.add_argument("--filename", type=str, help="File name")
+        pars.add_argument("--export-type", type=str, help="Export type: 1 | 2")
 
     def effect(self):
         if len(self.svg.selection.values()) == 0:
@@ -140,27 +141,36 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         return f"export-id:{id};export-filename:{filename}-{id}.png;export-id-only;export-do"
 
     def do_export(self, node, dpi, filename):
-        my_colors = self.find_all_by_prefix('color:')
         start = time.time()
         self.nomalize_width(node)
+        export_type = self.options.export_type
 
         svg = inkex.base.SvgOutputMixin.get_template(width=0, height=0).getroot()
         svg.append(self.svg.defs.copy())
         ids = []
-        for color in my_colors:
-            label = color.get('inkscape:label').split(':').pop()
-            gc = node.copy()
-            gc.set('id', label)
-            self.copy_style(color, gc)
-            svg.append(gc)
-            ids.append(label)
+        if export_type == "1":
+            my_colors = self.find_all_by_prefix('color:')
+            for color in my_colors:
+                label = color.get('inkscape:label').split(':').pop()
+                gc = node.copy()
+                gc.set('id', label)
+                self.copy_style(color, gc)
+                svg.append(gc)
+                ids.append(label)
+        else:
+                label = "chuky"
+                gc = node.copy()
+                gc.set('id', label)
+                svg.append(gc)
+                ids.append(label)
 
         tmpfile = os.path.join(f'out-{randomword(4)}.svg')
         inkex.command.write_svg(svg, tmpfile)
         exports = []
         exports = list(map(lambda id: self.gen_export_action(id, filename), ids))
         actions = [f"export-dpi:{dpi}"] + exports
-        res = inkex.command.inkscape(tmpfile, actions=";".join(actions))
+
+        inkex.command.inkscape(tmpfile, actions=";".join(actions)) # write svg
         os.remove(tmpfile)
         logger.debug(f"[Time][Export]: {time.time() - start }")
 
@@ -175,16 +185,6 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         for child in elements:
             if child.get('label') != FRAME_NODE_ID:
                 child.set('style', style)
-
-    def set_fill(self, node, color):
-        elements = [
-                element
-                for element in node.iter()
-                if isinstance(element, (inkex.base.IBaseElement, str))
-        ]
-        for child in elements:
-            if child.get('label') != FRAME_NODE_ID:
-                child.style["fill"] = color
 
 if __name__ == '__main__':
     TaoChuKyExtension().run()
