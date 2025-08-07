@@ -17,29 +17,34 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-"""
-This extension changes the fill of all selected elements to red.
-"""
 
 import os
 import inkex
 import logging as logger
-import random, string
+import random
+import string
 import time
 from lxml import etree
 import subprocess
 import platform
 
-logger.basicConfig(filename='./ext.log',
-filemode='w', format='%(levelname)s: %(message)s', level=logger.DEBUG)
+logger.disable(logger.CRITICAL) #comment this line to debug
+
+logger.basicConfig(
+    filename='./ext.log',
+    filemode='w',
+    format='%(levelname)s: %(message)s',
+    level=logger.DEBUG
+)
 
 FRAME_NODE_ID = '1:2frame'
 MAX_WIDTH = 300
 DEFAULT_GROUP_ID = 'inkxport:group1'
 
+
 def randomword(length):
-   letters = string.ascii_lowercase
-   return ''.join(random.choice(letters) for i in range(length))
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
 
 
 def run_cli_app(binary_name, args):
@@ -51,7 +56,6 @@ def run_cli_app(binary_name, args):
     """
     # Get the current working directory
     current_dir = os.getcwd()
-    logger.debug(f"curernt dir: {current_dir}")
 
     # Add .exe extension on Windows
     if platform.system() == "Windows":
@@ -64,15 +68,16 @@ def run_cli_app(binary_name, args):
     command = executable_path + " " + args
 
     try:
-        # Run the command
-        logger.debug(f"Executing: {' '.join(command)}")
         subprocess.run(command, shell=True)
     except FileNotFoundError:
-        logger.debug(f"Error: The executable '{executable_path}' was not found.")
+        logger.debug(f"Error: The executable '{
+                     executable_path}' was not found.")
     except subprocess.CalledProcessError as e:
-        logger.debug(f"Error: The command returned a non-zero exit code {e.returncode}.")
+        logger.debug(
+            f"Error: The command returned a non-zero exit code {e.returncode}.")
     except Exception as e:
         logger.debug(f"An unexpected error occurred: {e}")
+
 
 class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
     """EffectExtension to fill selected objects red"""
@@ -87,26 +92,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             return
         start = time.time()
         self._export()
-        self.run_pngquant()
-        logger.debug(f"[Time] total: {time.time() - start }")
-
-    def run_pngquant(self):
-        result = subprocess.run(["which", "pngquant"], capture_output=True, text=True, check=True)
-        if result.returncode != 0:
-            pass
-        logger.debug(result.stdout)
-        png_dir = os.path.dirname(os.path.join(self.svg_path(), self.options.filename))
-        png_files = [f for f in os.listdir(png_dir) if f.endswith('.png')]
-        # try catch here, skip if error
-        try:
-            for file in png_files:
-                file_path = os.path.join(png_dir, file)
-                result = subprocess.run(f"pngquant --quality=65-80 --force --speed=1 -- {file_path}", shell=True)
-                logger.debug(result.stdout)
-                os.remove(os.path.join(png_dir, file))
-        except Exception as e:
-            logger.debug(e)
-            pass
+        logger.debug(f"[Time] total: {time.time() - start}")
 
     def find_all_by_prefix(self, label):
         nodes = []
@@ -117,8 +103,10 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         return nodes
 
     def select_area(self):
-        svg = inkex.base.SvgOutputMixin.get_template(width=0, height=0).getroot()
-        g = inkex.Group(*map(lambda n: n.copy(), list(self.svg.selection.values())))
+        svg = inkex.base.SvgOutputMixin.get_template(
+            width=0, height=0).getroot()
+        g = inkex.Group(
+            *map(lambda n: n.copy(), list(self.svg.selection.values())))
         g.set('id', DEFAULT_GROUP_ID)
         svg.append(g)
         infile = os.path.join(f'in-{randomword(6)}.svg')
@@ -132,7 +120,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             'export-do'
         ]
         d = inkex.command.inkscape(
-            infile, 
+            infile,
             actions=";".join(actions),
             select=DEFAULT_GROUP_ID,
             X=True,
@@ -142,7 +130,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         )
 
         points = list(map(lambda n: float(n), d.splitlines()))
-        logger.debug(f"[Time][MesureSize]: {time.time() - start }")
+        logger.debug(f"[Time][MesureSize]: {time.time() - start}")
         loaded_svg = inkex.load_svg(infile).getroot()
         g = loaded_svg.getElementById(DEFAULT_GROUP_ID)
         os.remove(infile)
@@ -153,7 +141,8 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         px = 0
         if padding != 0:
             px = padding * dx
-        node.set('transform', f'matrix({dx + px},0.00,0.00,{dx + px},{px},{px})')
+        node.set('transform', f'matrix({
+                 dx + px},0.00,0.00,{dx + px},{px},{px})')
 
     def _export(self):
         c, g = self.select_area()
@@ -171,7 +160,7 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             y=f'{y}',
             width=f'{w}',
             height=f'{h}')
-        new_rect.style ={'fill' : 'none', 'stroke' : 'none'}
+        new_rect.style = {'fill': 'none', 'stroke': 'none'}
         new_rect.set('label', FRAME_NODE_ID)
         g.append(new_rect)
         self.export_final(g)
@@ -182,14 +171,27 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         self.do_export(g, opt.dpi, filename)
 
     def gen_export_action(self, id, filename):
-        return f"export-id:{id};export-filename:{filename}-{id}.png;export-id-only;export-do"
+        return f"export-id:{id};export-filename:{filename};export-id-only;export-do"
+
+    def copy_style(self, from_node, to_node):
+        style = from_node.get('style')
+        logger.debug(style)
+        elements = [
+            element
+            for element in to_node.iter()
+            if isinstance(element, (inkex.base.IBaseElement, str))
+        ]
+        for child in elements:
+            if child.get('label') != FRAME_NODE_ID:
+                child.set('style', style)
 
     def do_export(self, node, dpi, filename):
         start = time.time()
         self.nomalize_width(node)
         export_type = self.options.export_type
 
-        svg = inkex.base.SvgOutputMixin.get_template(width=0, height=0).getroot()
+        svg = inkex.base.SvgOutputMixin.get_template(
+            width=0, height=0).getroot()
         svg.append(self.svg.defs.copy())
         ids = []
         if export_type == "1":
@@ -202,33 +204,41 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
                 svg.append(gc)
                 ids.append(label)
         else:
-                label = "chuky"
-                gc = node.copy()
-                gc.set('id', label)
-                svg.append(gc)
-                ids.append(label)
+            label = "chuky"
+            gc = node.copy()
+            gc.set('id', label)
+            svg.append(gc)
+            ids.append(label)
 
         tmpfile = os.path.join(f'out-{randomword(4)}.svg')
         inkex.command.write_svg(svg, tmpfile)
-        exports = []
-        exports = list(map(lambda id: self.gen_export_action(id, filename), ids))
-        actions = [f"export-dpi:{dpi}"] + exports
+        exports_cmd = []
+        export_files = []
 
-        inkex.command.inkscape(tmpfile, actions=";".join(actions)) # write svg
+        for id in ids:
+            export_name = f"{filename}-{id}.png"
+            basename = os.path.basename(export_name)
+            tmpname = os.path.join(basename)
+            export_files.append(basename);
+            exports_cmd.append(self.gen_export_action(id, tmpname))
+
+        actions = [f"export-dpi:{dpi}"] + exports_cmd
+
+        inkex.command.inkscape(tmpfile, actions=";".join(actions))  # write svg
+
+        logger.debug(f"[Time][Export]: {time.time() - start}")
+
+        start = time.time()
+        target_dir = os.path.dirname(os.path.join(self.svg_path(), self.options.filename))
+        for file in export_files:
+            cmd = ["--quality=50-60 --force --speed=2"]
+            cmd.append(f"--output={os.path.join(target_dir, file)}")
+            cmd.append(f"-- {os.path.join(file)}")
+            run_cli_app("pngquant-bin/pngquant", " ".join(cmd))
+            os.remove(file)
+        logger.debug(f"[Time][compress]: {time.time() - start}")
+
         os.remove(tmpfile)
-        logger.debug(f"[Time][Export]: {time.time() - start }")
-
-    def copy_style(self, from_node, to_node):
-        style = from_node.get('style')
-        logger.debug(style)
-        elements = [
-                element
-                for element in to_node.iter()
-                if isinstance(element, (inkex.base.IBaseElement, str))
-        ]
-        for child in elements:
-            if child.get('label') != FRAME_NODE_ID:
-                child.set('style', style)
 
 if __name__ == '__main__':
     TaoChuKyExtension().run()
