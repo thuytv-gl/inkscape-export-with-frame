@@ -27,6 +27,8 @@ import logging as logger
 import random, string
 import time
 from lxml import etree
+import subprocess
+import platform
 
 logger.basicConfig(filename='./ext.log',
 filemode='w', format='%(levelname)s: %(message)s', level=logger.DEBUG)
@@ -34,9 +36,43 @@ filemode='w', format='%(levelname)s: %(message)s', level=logger.DEBUG)
 FRAME_NODE_ID = '1:2frame'
 MAX_WIDTH = 300
 DEFAULT_GROUP_ID = 'inkxport:group1'
+
 def randomword(length):
    letters = string.ascii_lowercase
    return ''.join(random.choice(letters) for i in range(length))
+
+
+def run_cli_app(binary_name, args):
+    """
+    Executes a command-line application.
+    Args:
+        binary_name (str): The name of the executable.
+        args (list): A list of string arguments to pass to the executable.
+    """
+    # Get the current working directory
+    current_dir = os.getcwd()
+    logger.debug(f"curernt dir: {current_dir}")
+
+    # Add .exe extension on Windows
+    if platform.system() == "Windows":
+        binary_name += ".exe"
+
+    # Construct the full path to the executable
+    executable_path = os.path.join(current_dir, binary_name)
+
+    # Build the full command list
+    command = executable_path + " " + args
+
+    try:
+        # Run the command
+        logger.debug(f"Executing: {' '.join(command)}")
+        subprocess.run(command, shell=True)
+    except FileNotFoundError:
+        logger.debug(f"Error: The executable '{executable_path}' was not found.")
+    except subprocess.CalledProcessError as e:
+        logger.debug(f"Error: The command returned a non-zero exit code {e.returncode}.")
+    except Exception as e:
+        logger.debug(f"An unexpected error occurred: {e}")
 
 class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
     """EffectExtension to fill selected objects red"""
@@ -51,14 +87,26 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
             return
         start = time.time()
         self._export()
+        self.run_pngquant()
         logger.debug(f"[Time] total: {time.time() - start }")
-    
-    def find_by_label(self, label):
-        for node in self.svg.iter():
-            node_label = node.get('inkscape:label')
-            if node_label == label:
-                return node
-        return None
+
+    def run_pngquant(self):
+        result = subprocess.run(["which", "pngquant"], capture_output=True, text=True, check=True)
+        if result.returncode != 0:
+            pass
+        logger.debug(result.stdout)
+        png_dir = os.path.dirname(os.path.join(self.svg_path(), self.options.filename))
+        png_files = [f for f in os.listdir(png_dir) if f.endswith('.png')]
+        # try catch here, skip if error
+        try:
+            for file in png_files:
+                file_path = os.path.join(png_dir, file)
+                result = subprocess.run(f"pngquant --quality=65-80 --force --speed=1 -- {file_path}", shell=True)
+                logger.debug(result.stdout)
+                os.remove(os.path.join(png_dir, file))
+        except Exception as e:
+            logger.debug(e)
+            pass
 
     def find_all_by_prefix(self, label):
         nodes = []
@@ -69,8 +117,6 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         return nodes
 
     def select_area(self):
-        os.environ["SELF_CALL"] = "true"
-
         svg = inkex.base.SvgOutputMixin.get_template(width=0, height=0).getroot()
         g = inkex.Group(*map(lambda n: n.copy(), list(self.svg.selection.values())))
         g.set('id', DEFAULT_GROUP_ID)
@@ -110,7 +156,6 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         node.set('transform', f'matrix({dx + px},0.00,0.00,{dx + px},{px},{px})')
 
     def _export(self):
-        os.environ["SELF_CALL"] = "true"
         c, g = self.select_area()
         x, y, w0, h0 = c
         w = w0
@@ -132,11 +177,10 @@ class TaoChuKyExtension(inkex.EffectExtension, inkex.base.TempDirMixin):
         self.export_final(g)
 
     def export_final(self, g):
-        os.environ["SELF_CALL"] = "true"
         opt = self.options
         filename = os.path.join(self.svg_path(), opt.filename)
         self.do_export(g, opt.dpi, filename)
-    
+
     def gen_export_action(self, id, filename):
         return f"export-id:{id};export-filename:{filename}-{id}.png;export-id-only;export-do"
 
